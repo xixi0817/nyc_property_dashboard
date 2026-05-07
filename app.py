@@ -102,6 +102,13 @@ df_sch_score = df_sch_score.merge(df_best_school, on="zip_code", how="left")
 
 app = Dash(__name__)
 server = app.server  # ← needed for Render
+from flask_caching import Cache
+
+cache = Cache(server, config={
+    "CACHE_TYPE": "SimpleCache",
+    "CACHE_DEFAULT_TIMEOUT": 300,
+})
+
 
 # ============================================================
 # LAYOUT — Cell 77 design preserved, only scatter section updated
@@ -365,6 +372,8 @@ def sync_borough_controls(dropdown_val, radio_val):
     Input("year-slider",    "value"),
     Input("borough-state",  "data"),
 )
+
+@cache.memoize()    
 def update_charts(year_range, borough_state):
 
     year_min, year_max = year_range

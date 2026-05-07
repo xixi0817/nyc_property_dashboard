@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+
+# Large raw data files (not needed for deployment)
+Datasets/df_master.csv
+Datasets/NYPD_Arrest_Data_*.csv
+Datasets/spotcrime.crime.ny.csv
+Datasets/NYC_Property_Sales.csv
+Datasets/cs-report-*.xlsx
+Datasets/MTA_Subway_Stations_*.csv
+Datasets/NYC_Top_*.xlsx
+Datasets/NYC Public School Rankings*.xlsx
+Datasets/NYC Median Household Income.xlsx
+Datasets/property_data/
+
+# Notebooks (raw work, not for deployment)
+*.ipynb
+
+# Other
+viz1_geospatial_map.html
+borough_summary.csv
+
+# Course documents (not needed for deployment)
+*.pdf
+*.docx

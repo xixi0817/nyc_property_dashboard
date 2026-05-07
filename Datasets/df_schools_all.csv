@@ -1,0 +1,179 @@
+rank,school_name,borough,zip_code,type,school_level
+1,Success Academy Hell’s Kitchen,manhattan,10019,Charter,elementary
+2,NEST+m,manhattan,10002,Public,elementary
+3,Success Academy Bensonhurst,brooklyn,11214,Charter,elementary
+4,Icahn Charter School 6,bronx,10457,Charter,elementary
+5,Success Academy Bushwick,brooklyn,11221,Charter,elementary
+6,Success Academy Hudson Yards,manhattan,10001,Charter,elementary
+7,Success Academy Upper West,manhattan,10024,Charter,elementary
+8,Success Academy Union Square,manhattan,10003,Charter,elementary
+9,Success Academy Cobble Hill,brooklyn,11201,Charter,elementary
+10,Success Academy Williamsburg,brooklyn,11206,Charter,elementary
+11,PS 77 Lower Lab,manhattan,10023,Public,elementary
+12,PS 334 Anderson,manhattan,10023,Public,elementary
+13,PS 234 Independence,manhattan,10282,Public,elementary
+14,PS 6 Lillie Blake,manhattan,10028,Public,elementary
+15,PS 87 William Sherman,manhattan,10024,Public,elementary
+16,PS 321 William Penn,brooklyn,11215,Public,elementary
+17,PS 199 Jessie Straus,manhattan,10025,Public,elementary
+18,PS 290 Manhattan New School,manhattan,10025,Public,elementary
+19,PS 41 Greenwich Village,manhattan,10014,Public,elementary
+20,PS 29 Harrigan,brooklyn,11201,Public,elementary
+21,PS 11 Purvis Behan,brooklyn,11201,Public,elementary
+22,PS 58 Carroll,brooklyn,11231,Public,elementary
+23,PS 8 Robert Fulton,brooklyn,11201,Public,elementary
+24,PS 3 Bedford Village,brooklyn,11216,Public,elementary
+25,PS 166 Gradstein,manhattan,10023,Public,elementary
+26,PS 9 Bergen,brooklyn,11217,Public,elementary
+27,PS 130 De Soto,manhattan,10011,Public,elementary
+28,PS 452 Manhattan School Children,manhattan,10023,Public,elementary
+29,PS 77Q,queens,11375,Public,elementary
+30,PS 122 Mamie Fay,queens,11375,Public,elementary
+31,PS 196 Grand Central Pkwy,queens,11365,Public,elementary
+32,PS 203 Oakland Gardens,queens,11364,Public,elementary
+33,PS 188 Kingsbury,queens,11361,Public,elementary
+34,PS 221 North Hills,queens,11364,Public,elementary
+35,PS 46 Alley Pond,queens,11365,Public,elementary
+36,PS 159 Isaac Pitkin,queens,11414,Public,elementary
+37,PS 184 Flushing Manor,queens,11358,Public,elementary
+38,PS 108 Capt Fowler,queens,11357,Public,elementary
+39,PS 186 Castlewood,queens,11357,Public,elementary
+40,PS 209 Clearview Gardens,queens,11360,Public,elementary
+1,Stuyvesant High School,manhattan,10282,Specialized,high
+2,Bronx High School of Science,bronx,10468,Specialized,high
+3,Staten Island Technical High School,statenisland,10306,Specialized,high
+4,Brooklyn Technical High School,brooklyn,11217,Specialized,high
+5,Queens High School for the Sciences at York College,queens,11451,Specialized,high
+6,High School for Math Science and Engineering at CCNY,manhattan,10031,Specialized,high
+7,Townsend Harris High School,queens,11367,Screened,high
+8,Brooklyn Latin School,brooklyn,11201,Specialized,high
+9,High School of American Studies at Lehman College,bronx,10468,Specialized,high
+10,Bard High School Early College Manhattan,manhattan,10002,Screened,high
+11,Bard High School Early College Queens,queens,11101,Screened,high
+12,NYC Lab School for Collaborative Studies,manhattan,10011,Screened,high
+13,Beacon High School,manhattan,10023,Screened,high
+14,Millennium High School,manhattan,10281,Screened,high
+15,Eleanor Roosevelt High School,manhattan,10028,Screened,high
+16,Baruch College Campus High School,manhattan,10010,Screened,high
+18,Leon M Goldstein High School for Sciences,brooklyn,11235,Screened,high
+19,Midwood High School,brooklyn,11210,Screened,high
+20,Frank Sinatra School of the Arts,queens,11106,Audition,high
+21,LaGuardia High School of Music & Art,manhattan,10023,Audition,high
+22,Manhattan Village Academy,manhattan,10011,Screened,high
+23,Bronx Center for Science and Mathematics,bronx,10457,Screened,high
+24,Forest Hills High School,queens,11375,Screened,high
+25,Tottenville High School,statenisland,10312,Zoned,high
+26,Brooklyn College Academy,brooklyn,11210,Screened,high
+27,Bronx School of Law and Finance,bronx,10456,Screened,high
+28,Academy for Software Engineering,manhattan,10004,Screened,high
+29,Clinton School for Writers & Artists,manhattan,10003,Screened,high
+30,High School for Dual Language and Asian Studies,manhattan,10002,Screened,high
+31,Queens Metropolitan High School,queens,11432,Screened,high
+32,Bronx Academy of Health Careers,bronx,10456,Screened,high
+33,Pan American International High School,queens,11373,Screened,high
+34,CSI High School for International Studies,statenisland,10314,Screened,high
+35,Academy of American Studies,queens,11103,Screened,high
+36,Brooklyn High School of the Arts,brooklyn,11201,Audition,high
+37,Urban Assembly School for Law and Justice,brooklyn,11201,Screened,high
+38,Lower Manhattan Arts Academy,manhattan,10002,Screened,high
+39,Queens Gateway to Health Sciences,queens,11373,Screened,high
+40,Bronx High School for Writing and Communication Arts,bronx,10468,Screened,high
+41,High School for Environmental Studies,manhattan,10023,Screened,high
+42,Institute for Collaborative Education,manhattan,10009,Screened,high
+43,Central Park East High School,manhattan,10035,Screened,high
+44,Brooklyn School for Math and Research,brooklyn,11217,Screened,high
+45,Bronx Early College Academy,bronx,10458,Screened,high
+46,Digital Arts and Cinema Technology High School,brooklyn,11237,Screened,high
+47,Academy for Young Writers,brooklyn,11207,Screened,high
+48,Queens School of Inquiry,queens,11365,Screened,high
+49,New Explorations into Science Technology and Math,manhattan,10002,Screened,high
+50,Urban Assembly Maker Academy,manhattan,10001,Screened,high
+51,Bronx Design and Construction Academy,bronx,10457,Screened,high
+52,High School for Health Professions,brooklyn,11235,Screened,high
+53,Brooklyn Academy of Science and the Environment,brooklyn,11225,Screened,high
+54,Bronx Academy of Letters,bronx,10451,Screened,high
+55,High School for Public Service Brooklyn,brooklyn,11203,Screened,high
+56,Queens High School of Teaching,queens,11375,Screened,high
+57,World Journalism Preparatory,queens,11375,Screened,high
+58,Urban Assembly School for Green Careers,brooklyn,11203,Screened,high
+59,High School for Global Citizenship,brooklyn,11201,Screened,high
+60,Bronx Leadership Academy,bronx,10457,Screened,high
+61,Queens School of Construction,queens,11435,Screened,high
+62,New Utrecht High School,brooklyn,11214,Zoned,high
+63,Edward R Murrow High School,brooklyn,11229,Screened,high
+64,John Bowne High School,queens,11367,Zoned,high
+65,William Cullen Bryant High School,queens,11106,Zoned,high
+66,Grover Cleveland High School,queens,11385,Zoned,high
+67,Flushing High School,queens,11355,Zoned,high
+68,Long Island City High School,queens,11101,Zoned,high
+69,Thomas A Edison Career High School,queens,11432,CTE,high
+70,Queens Vocational High School,queens,11106,CTE,high
+71,Bronx Health Sciences High School,bronx,10460,Screened,high
+72,DeWitt Clinton High School,bronx,10468,Zoned,high
+73,James Madison High School,brooklyn,11229,Zoned,high
+74,Brooklyn High School for Leadership,brooklyn,11226,Screened,high
+75,George Westinghouse Career High School,brooklyn,11201,CTE,high
+76,Boys and Girls High School,brooklyn,11221,Zoned,high
+77,Bronx International High School,bronx,10460,Screened,high
+78,Bronx School for Law Government and Justice,bronx,10451,Screened,high
+79,Urban Assembly School for Wildlife Conservation,bronx,10460,Screened,high
+80,Bronx River High School,bronx,10460,Screened,high
+81,High School for Violin and Dance (Arts focus),manhattan,10002,Audition,high
+82,Urban Assembly School for Media Studies,brooklyn,11201,Screened,high
+83,Manhattan Early College School for Advertising,manhattan,10003,Screened,high
+84,Bronx Aerospace High School,bronx,10451,CTE,high
+85,High School for Arts and Business,queens,11385,Screened,high
+86,Queens Preparatory Academy,queens,11432,Screened,high
+87,Bronx Academy for Software Engineering,bronx,10451,Screened,high
+88,Brooklyn Generation School,brooklyn,11217,Screened,high
+89,High School for Law Advocacy and Community Justice,brooklyn,11201,Screened,high
+90,Manhattan Business Academy,manhattan,10016,Screened,high
+91,Bronx High School for Medical Science,bronx,10468,Screened,high
+92,Pan American International High School II,queens,11432,Screened,high
+93,Brooklyn Democracy Academy,brooklyn,11212,Screened,high
+94,Urban Assembly School for Emergency Management,manhattan,10002,Screened,high
+95,Bronx Engineering and Technology Academy,bronx,10460,Screened,high
+96,Queens High School for Information Research,queens,11435,Screened,high
+97,High School for Youth and Community Development,bronx,10457,Screened,high
+98,Brooklyn Lab School,brooklyn,11201,Charter,high
+99,Success Academy High School of Liberal Arts,manhattan,10002,Charter,high
+100,Bronx Collegiate Academy,bronx,10457,Screened,high
+1,Anderson School (PS 334),manhattan,10023,Public,middle
+2,NYC Lab Middle School,manhattan,10011,Public,middle
+4,MS 51 William Alexander,brooklyn,11215,Public,middle
+5,MS 447 Brooklyn School of Inquiry,brooklyn,11201,Public,middle
+6,MS 54 Booker T. Washington,manhattan,10023,Public,middle
+7,MS 74 Nathaniel Hawthorne,queens,11375,Public,middle
+8,MS 172 Beacon School of Excellence,brooklyn,11225,Public,middle
+9,MS 255 Salk School of Science,manhattan,10010,Public,middle
+10,MS 67 Louis Pasteur,brooklyn,11209,Public,middle
+11,MS 158 Marie Curie,queens,11355,Public,middle
+12,MS 216 George J. Ryan,queens,11364,Public,middle
+13,MS 250 West Side Collaborative,manhattan,10025,Public,middle
+14,MS 104 Simon Baruch,manhattan,10002,Public,middle
+15,MS 839,brooklyn,11217,Public,middle
+16,MS 131 Albert Einstein,bronx,10463,Public,middle
+17,MS 180 Dr. Daniel Hale Williams,bronx,10467,Public,middle
+18,MS 88 Seneca,queens,11385,Public,middle
+19,MS 266 Park Place,brooklyn,11213,Public,middle
+20,MS 582 Upper Academy,bronx,10458,Public,middle
+21,Success Academy Upper West Middle,manhattan,10024,Charter,middle
+22,Success Academy Harlem East Middle,manhattan,10029,Charter,middle
+23,Success Academy Bronx Middle,bronx,10456,Charter,middle
+24,Success Academy Brooklyn East Middle,brooklyn,11207,Charter,middle
+25,MS 223 The Montauk,brooklyn,11236,Public,middle
+26,MS 137 America's School of Heroes,queens,11367,Public,middle
+27,MS 390 Bronx,bronx,10456,Public,middle
+28,MS 45 Thomas C. Giordano,brooklyn,11209,Public,middle
+29,MS 126 Albert Shanker,queens,11373,Public,middle
+30,MS 113 Ronald Edmonds,brooklyn,11207,Public,middle
+31,MS 53 Brian Piccolo,queens,11373,Public,middle
+32,MS 181 Pablo Casals,bronx,10468,Public,middle
+33,MS 22 Jordan L. Mott,bronx,10455,Public,middle
+34,MS 391 Angelo Patri,queens,11385,Public,middle
+35,MS 319 Maria Teresa,brooklyn,11230,Public,middle
+36,MS 51 Staten Island,statenisland,10314,Public,middle
+37,MS 72 Rocco Laurie,statenisland,10314,Public,middle
+38,MS 302 Staten Island,statenisland,10306,Public,middle
+39,MS 75 Staten Island,statenisland,10309,Public,middle
+40,MS 50 Staten Island,statenisland,10312,Public,middle

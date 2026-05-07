@@ -17,19 +17,7 @@ import plotly.graph_objects as go
 
 #df_master                 = pd.read_csv("Datasets/df_master.csv.gz")
 
-df_master = pd.read_csv(
-    "Datasets/df_master.csv.gz",
-    dtype={
-        "tax_class_at_present": "category",
-        "building_class_at_present": "category",
-        "borough": "category",
-        "zip_code": "string",
-    },
-    low_memory=False
-)
-# Drop columns we don't need to save memory
-needed_cols = ["year", "sale_price", "zip_code", "borough"]
-df_master = df_master[needed_cols]
+df_master = pd.read_csv("Datasets/df_master.csv.gz")
 
 
 df_schools_all            = pd.read_csv("Datasets/df_schools_all.csv")

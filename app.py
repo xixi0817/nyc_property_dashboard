@@ -748,5 +748,10 @@ def update_charts(year_range, borough_state):
 # RUN
 # ============================================================
 
+#if __name__ == "__main__":
+ #   app.run(debug=False, port=8051)
+
+import os
 if __name__ == "__main__":
-    app.run(debug=False, port=8051)
+    port = int(os.environ.get("PORT", 8051))
+    app.run(debug=False, host="0.0.0.0", port=port)

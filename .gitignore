@@ -30,3 +30,5 @@ borough_summary.csv
 # Course documents (not needed for deployment)
 *.pdf
 *.docx
+Datasets/df_master_backup_before_property.csv.gz
+Datasets/df_master_full_backup.csv.gz

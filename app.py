@@ -775,11 +775,9 @@ def update_top_charts(year_range, borough_state, crime_type, property_type):
     zip_data["school_score"]              = zip_data["school_score"].round(1)
     zip_data["nearest_subway_dist_miles"] = zip_data["nearest_subway_dist_miles"].round(2)
 
-    if len(zip_data) > 0:
-        p_min = zip_data["median_sale_price"].quantile(0.10)
-        p_max = zip_data["median_sale_price"].quantile(0.85)
-    else:
-        p_min, p_max = 0, 1
+    # Use FIXED color range across all years so price growth is visible on the map
+    p_min = 300_000
+    p_max = 1_800_000
 
     fig_map = px.choropleth_map(
         zip_data, geojson=nyc_zip_geojson,

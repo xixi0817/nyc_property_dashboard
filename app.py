@@ -12,13 +12,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # ============================================================
-# LOAD DATA (from saved CSVs)
+# LOAD DATA
 # ============================================================
 
-#df_master                 = pd.read_csv("Datasets/df_master.csv.gz")
-
 df_master = pd.read_csv("Datasets/df_master.csv.gz")
-
 
 df_schools_all            = pd.read_csv("Datasets/df_schools_all.csv")
 df_income                 = pd.read_csv("Datasets/df_income.csv")
@@ -27,7 +24,6 @@ arrest_per_zip            = pd.read_csv("Datasets/arrest_per_zip.csv")
 df_zip_centroids          = pd.read_csv("Datasets/df_zip_centroids.csv")
 arrest_zip_enhanced_clean = pd.read_csv("Datasets/arrest_zip_enhanced.csv")
 
-# Fix zip_code format
 for df in [df_master, df_schools_all, df_income,
            arrest_per_zip, df_zip_centroids, arrest_zip_enhanced_clean]:
     if "zip_code" in df.columns:
@@ -35,16 +31,22 @@ for df in [df_master, df_schools_all, df_income,
                           .str.replace(".0", "", regex=False)
                           .str.strip().str.zfill(5))
 
-# Fix dtypes
 df_master["year"]       = pd.to_numeric(df_master["year"], errors="coerce")
 df_master["sale_price"] = pd.to_numeric(df_master["sale_price"], errors="coerce")
 
-# Load GeoJSON
+if "sale_date" in df_master.columns and "sale_month" not in df_master.columns:
+    df_master["sale_month"] = pd.to_datetime(
+        df_master["sale_date"], errors="coerce"
+    ).dt.month
+elif "sale_month" not in df_master.columns:
+    print("WARNING: df_master has no 'sale_date' or 'sale_month' column.")
+    df_master["sale_month"] = np.nan
+
 zip_geojson_url = "https://raw.githubusercontent.com/fedhere/PUI2015_EC/master/mam1612_EC/nyc-zip-code-tabulation-areas-polygons.geojson"
 nyc_zip_geojson = requests.get(zip_geojson_url).json()
 
 # ============================================================
-# THEME (same as your notebook)
+# THEME
 # ============================================================
 
 BOROUGH_NAME_MAP = {
@@ -53,6 +55,18 @@ BOROUGH_NAME_MAP = {
     "manhattan"   : "Manhattan",
     "queens"      : "Queens",
     "statenisland": "Staten Island"
+}
+
+# Crime type options (column name -> display label)
+CRIME_TYPES = {
+    "arrest_count" : "Total Arrests",
+    "crime_per_10k": "Crimes per 10,000 People",
+    "murder"       : "Murder",
+    "robbery"      : "Robbery",
+    "fel_assault"  : "Felony Assault",
+    "burglary"     : "Burglary",
+    "gr_larceny"   : "Grand Larceny",
+    "gla"          : "Grand Larceny Auto",
 }
 
 THEME = {
@@ -79,7 +93,7 @@ THEME = {
 }
 
 # ============================================================
-# PRE-COMPUTE SCHOOL SCORE & BEST SCHOOL
+# PRE-COMPUTE SCHOOL SCORE
 # ============================================================
 
 df_sch_score = (df_schools_all.groupby("zip_code")["rank"].mean()
@@ -96,12 +110,14 @@ df_best_school = (
 )
 df_sch_score = df_sch_score.merge(df_best_school, on="zip_code", how="left")
 
+
+
 # ============================================================
 # APP
 # ============================================================
 
 app = Dash(__name__)
-server = app.server  # ← needed for Render
+server = app.server
 from flask_caching import Cache
 
 cache = Cache(server, config={
@@ -111,26 +127,26 @@ cache = Cache(server, config={
 
 
 # ============================================================
-# LAYOUT — Cell 77 design preserved, only scatter section updated
+# LAYOUT
 # ============================================================
 
 app.layout = html.Div([
 
-    # Hidden store: central borough state (syncs top dropdown <-> bottom radio)
     dcc.Store(id="borough-state", data="all"),
+    dcc.Store(id="monthly-override", data={"borough": False, "year": False}),
 
-    # ── Header ──────────────────────────────────────────
+    # Header
     html.Div([
         html.H1("NYC Property Market Dashboard",
             style={"fontFamily": "Arial", "fontSize": "26px",
                    "color": "#2c2c2c", "margin": "0"}),
-        html.P("How do neighborhood factors influence residential property prices across NYC (2013–2025)?",
+        html.P("How do neighborhood factors influence residential property prices across NYC (2013-2025)?",
             style={"fontFamily": "Arial", "fontSize": "13px",
                    "color": "#666", "margin": "4px 0 0 0"})
     ], style={"padding": "20px 30px 15px 30px",
               "borderBottom": "1px solid #e8e8e8"}),
 
-    # ── KPI Cards ───────────────────────────────────────
+    # KPI Cards
     html.Div(id="kpi-cards", style={
         "display": "flex",
         "padding": "15px 30px",
@@ -138,7 +154,7 @@ app.layout = html.Div([
         "borderBottom": "1px solid #e8e8e8"
     }),
 
-    # ── Top Controls (Year + Borough Dropdown) ───────────
+    # Top Controls (Year + Borough)
     html.Div([
         html.Div([
             html.Label("Year Range",
@@ -173,19 +189,19 @@ app.layout = html.Div([
               "borderBottom": "1px solid #e8e8e8",
               "background": "#fafafa"}),
 
-    # ── Row 1: Map (full width) ──────────────────────────
+    # Map
     html.Div([
         dcc.Graph(id="fig-map", style={"height": "550px"})
     ], style={"padding": "20px 30px 10px 30px",
               "borderBottom": "1px solid #e8e8e8"}),
 
-    # ── Row 2: Line Chart (full width) ──────────────────
+    # Line Chart
     html.Div([
         dcc.Graph(id="fig-line", style={"height": "420px"})
     ], style={"padding": "10px 30px",
               "borderBottom": "1px solid #e8e8e8"}),
 
-    # ── Row 3: Explore by Borough (replaces "Explore by Factor") ──
+    # Borough Radio
     html.Div([
         html.Div([
             html.Span("Explore by Factor: by Borough  ",
@@ -212,8 +228,7 @@ app.layout = html.Div([
               "background": "#fafafa",
               "borderBottom": "1px solid #e8e8e8"}),
 
-    # ── Row 4: 4 scatter plots in 2x2 grid ──────────────
-    # First row: Income | School
+    # Scatter Row 1: Income | School
     html.Div([
         html.Div([dcc.Graph(id="fig-income", style={"height": "440px"})],
                  style={"flex": "1", "minWidth": "0"}),
@@ -224,10 +239,28 @@ app.layout = html.Div([
               "padding": "10px 30px",
               "borderBottom": "1px solid #e8e8e8"}),
 
-    # Second row: Crime | Subway
+    # Scatter Row 2: Crime | Subway (Crime scatter has crime type dropdown)
     html.Div([
-        html.Div([dcc.Graph(id="fig-crime", style={"height": "440px"})],
-                 style={"flex": "1", "minWidth": "0"}),
+        html.Div([
+            # Crime Type selector (above the crime scatter)
+            html.Div([
+                html.Label("Crime Type:",
+                    style={"fontFamily": "Arial", "fontSize": "12px",
+                           "color": "#666", "marginRight": "10px",
+                           "fontWeight": "bold"}),
+                dcc.Dropdown(
+                    id="crime-type-dropdown",
+                    options=[{"label": v, "value": k} for k, v in CRIME_TYPES.items()],
+                    value="arrest_count",
+                    clearable=False,
+                    style={"fontFamily": "Arial", "fontSize": "12px",
+                           "width": "240px"}
+                )
+            ], style={"display": "flex", "alignItems": "center",
+                      "padding": "8px 20px 0 20px"}),
+            dcc.Graph(id="fig-crime", style={"height": "410px"})
+        ], style={"flex": "1", "minWidth": "0"}),
+
         html.Div([dcc.Graph(id="fig-subway", style={"height": "440px"})],
                  style={"flex": "1", "minWidth": "0",
                         "borderLeft": "1px solid #e8e8e8"}),
@@ -235,11 +268,76 @@ app.layout = html.Div([
               "padding": "10px 30px",
               "borderBottom": "1px solid #e8e8e8"}),
 
-    # ── Footer ──────────────────────────────────────────
+
+    # Monthly Section
     html.Div([
-        html.Span("Xixi Lin · Jiahuan Wu · Victor Louie · Chhin Lama",
+        html.H3("Monthly Market Patterns",
+            style={"fontFamily": "Arial", "fontSize": "18px",
+                   "color": "#2c2c2c", "margin": "0 0 4px 0"}),
+        html.P("These controls default to your selection above, but you can change them independently",
+            style={"fontFamily": "Arial", "fontSize": "12px",
+                   "color": "#888", "margin": "0 0 15px 0"}),
+
+        html.Div([
+            html.Span("Explore by Borough  ",
+                style={"fontFamily": "Arial", "fontSize": "13px",
+                       "color": "#2c2c2c", "fontWeight": "bold"}),
+            dcc.RadioItems(
+                id="monthly-borough-radio",
+                options=[
+                    {"label": " All",           "value": "all"},
+                    {"label": " Bronx",         "value": "bronx"},
+                    {"label": " Brooklyn",      "value": "brooklyn"},
+                    {"label": " Manhattan",     "value": "manhattan"},
+                    {"label": " Queens",        "value": "queens"},
+                    {"label": " Staten Island", "value": "statenisland"},
+                ],
+                value="all",
+                inline=True,
+                style={"fontFamily": "Arial", "fontSize": "13px",
+                       "color": "#2c2c2c", "display": "inline"},
+                labelStyle={"marginLeft": "20px", "cursor": "pointer"}
+            ),
+        ], style={"display": "flex", "alignItems": "center",
+                  "marginBottom": "12px"}),
+
+        html.Div([
+            html.Span("Explore by Year  ",
+                style={"fontFamily": "Arial", "fontSize": "13px",
+                       "color": "#2c2c2c", "fontWeight": "bold",
+                       "marginRight": "20px",
+                       "whiteSpace": "nowrap"}),
+            html.Div([
+                dcc.RangeSlider(
+                    id="monthly-year-slider",
+                    min=2013, max=2025, step=1,
+                    value=[2013, 2025],
+                    marks={y: {"label": str(y),
+                               "style": {"fontFamily": "Arial", "fontSize": "10px"}}
+                           for y in range(2013, 2026)},
+                    tooltip={"placement": "bottom", "always_visible": False}
+                )
+            ], style={"flex": "1"})
+        ], style={"display": "flex", "alignItems": "center",
+                  "marginBottom": "20px"}),
+
+        html.Div(id="kpi-monthly", style={
+            "display": "flex",
+            "gap": "12px",
+            "marginBottom": "20px"
+        }),
+
+        dcc.Graph(id="fig-seasonal", style={"height": "500px"})
+
+    ], style={"padding": "25px 30px",
+              "borderBottom": "1px solid #e8e8e8",
+              "background": "#fafafa"}),
+
+    # Footer
+    html.Div([
+        html.Span("Xixi Lin - Jiahuan Wu - Victor Louie - Chhin Lama",
             style={"fontFamily": "Arial", "fontSize": "12px", "color": "#999"}),
-        html.Span("Baruch College · CIS 9655 · Spring 2026",
+        html.Span("Baruch College - CIS 9655 - Spring 2026",
             style={"fontFamily": "Arial", "fontSize": "12px", "color": "#999"})
     ], style={"display": "flex", "justifyContent": "space-between",
               "padding": "15px 30px",
@@ -267,7 +365,6 @@ def kpi_card(label, value, color):
 
 
 def apply_scatter_theme(fig, x_label, y_label="Median Property Sale Price"):
-    """Apply your unified theme to a scatter plot (matches your notebook)."""
     fig.update_layout(
         title=dict(
             x=0.5,
@@ -318,8 +415,6 @@ def apply_scatter_theme(fig, x_label, y_label="Median Property Sale Price"):
 
 
 def grey_out_other_boroughs(fig, selected_borough_label):
-    """When a specific borough is selected, dim all other borough markers
-    (but keep them visible). Trendline stays as-is."""
     if selected_borough_label is None:
         return fig
     for trace in fig.data:
@@ -329,7 +424,182 @@ def grey_out_other_boroughs(fig, selected_borough_label):
 
 
 # ============================================================
-# CALLBACK 1: Sync top dropdown <-> bottom radio
+# MONTHLY SECTION HELPERS
+# ============================================================
+
+MONTH_LABELS = {1:"Jan", 2:"Feb", 3:"Mar", 4:"Apr", 5:"May", 6:"Jun",
+                7:"Jul", 8:"Aug", 9:"Sep", 10:"Oct", 11:"Nov", 12:"Dec"}
+
+
+def build_monthly_kpi_cards(dff):
+    if (len(dff) == 0
+        or "sale_month" not in dff.columns
+        or dff["sale_month"].isna().all()):
+        return [html.Div("No monthly data available",
+                         style={"padding": "20px", "color": "#999",
+                                "fontFamily": "Arial", "flex": "1"})]
+
+    monthly = (dff.dropna(subset=["sale_month"])
+               .groupby("sale_month")
+               .agg(median_price=("sale_price", "median"),
+                    transaction_count=("sale_price", "count"))
+               .reset_index())
+    monthly["sale_month"] = monthly["sale_month"].astype(int)
+    monthly["month_name"] = monthly["sale_month"].map(MONTH_LABELS)
+
+    if len(monthly) < 2:
+        return [html.Div("Not enough data for monthly view",
+                         style={"padding": "20px", "color": "#999",
+                                "fontFamily": "Arial", "flex": "1"})]
+
+    low_price  = monthly.loc[monthly["median_price"].idxmin()]
+    high_price = monthly.loc[monthly["median_price"].idxmax()]
+    peak_vol   = monthly.loc[monthly["transaction_count"].idxmax()]
+    low_vol    = monthly.loc[monthly["transaction_count"].idxmin()]
+
+    spread_pct = (high_price["median_price"] - low_price["median_price"]) / low_price["median_price"] * 100
+    volume_drop_pct = (peak_vol["transaction_count"] - low_vol["transaction_count"]) / peak_vol["transaction_count"] * 100
+
+    cards = [
+        ("LOWEST MEDIAN PRICE", low_price["month_name"],
+         f"${low_price['median_price']/1000:.0f}K median", "#0F766E"),
+        ("HIGHEST VOLUME", peak_vol["month_name"],
+         f"{int(peak_vol['transaction_count']):,} transactions", "#92400E"),
+        ("PRICE RANGE", f"+{spread_pct:.1f}%",
+         f"{low_price['month_name']} -> {high_price['month_name']}", "#0F766E"),
+        ("VOLUME RANGE", f"-{volume_drop_pct:.0f}%",
+         f"{low_vol['month_name']} vs {peak_vol['month_name']}", "#92400E"),
+    ]
+
+    return [
+        html.Div([
+            html.Div(style={"height": "4px", "background": color,
+                            "borderRadius": "4px 4px 0 0"}),
+            html.Div([
+                html.P(label, style={"fontFamily": "Arial", "fontSize": "13px",
+                                     "color": "#666", "margin": "0 0 12px 0",
+                                     "textAlign": "center", "letterSpacing": "0.5px"}),
+                html.H2(value, style={"fontFamily": "Arial", "fontSize": "36px",
+                                       "color": color, "margin": "0",
+                                       "fontWeight": "700", "textAlign": "center"}),
+                html.P(sub, style={"fontFamily": "Arial", "fontSize": "12px",
+                                   "color": "#888", "margin": "8px 0 0 0",
+                                   "textAlign": "center"})
+            ], style={"padding": "16px"})
+        ], style={"flex": "1", "background": "#fafbfc",
+                  "border": "1px solid #e1e4e8",
+                  "borderRadius": "6px", "overflow": "hidden"})
+        for label, value, sub, color in cards
+    ]
+
+
+def build_seasonal_chart(dff_monthly, year_min, year_max, selected_borough_label):
+    if (len(dff_monthly) == 0
+        or "sale_month" not in dff_monthly.columns
+        or dff_monthly["sale_month"].isna().all()):
+        fig = go.Figure()
+        fig.add_annotation(text="No monthly data available",
+                           xref="paper", yref="paper", x=0.5, y=0.5,
+                           showarrow=False,
+                           font=dict(family="Arial", size=16, color="#999"))
+        return fig
+
+    dff_monthly = dff_monthly.dropna(subset=["sale_month"]).copy()
+    dff_monthly["sale_month"] = dff_monthly["sale_month"].astype(int)
+
+    monthly_total = (dff_monthly.groupby("sale_month")
+                     .agg(transaction_count=("sale_price", "count"))
+                     .reset_index())
+    monthly_total["month_name"] = monthly_total["sale_month"].map(MONTH_LABELS)
+
+    monthly_borough = (dff_monthly.groupby(["sale_month", "borough"])
+                       .agg(median_price=("sale_price", "median"))
+                       .reset_index())
+    monthly_borough["month_name"]      = monthly_borough["sale_month"].map(MONTH_LABELS)
+    monthly_borough["borough_display"] = monthly_borough["borough"].map(BOROUGH_NAME_MAP)
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Bar(
+        x=monthly_total["month_name"],
+        y=monthly_total["transaction_count"],
+        name="Transactions (NYC total)",
+        marker=dict(color="rgba(150,150,150,0.4)"),
+        yaxis="y",
+        hovertemplate="<b>%{x}</b><br>Transactions: %{y:,}<extra></extra>"
+    ))
+
+    all_boroughs = ["Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island"]
+    for borough in all_boroughs:
+        df_b = monthly_borough[monthly_borough["borough_display"] == borough].sort_values("sale_month")
+        if len(df_b) < 2:
+            continue
+
+        if selected_borough_label is None:
+            opacity = 1.0
+            width = 2.5
+            marker_size = 7
+        elif borough == selected_borough_label:
+            opacity = 1.0
+            width = 3.5
+            marker_size = 9
+        else:
+            opacity = 0.2
+            width = 2.0
+            marker_size = 6
+
+        fig.add_trace(go.Scatter(
+            x=df_b["month_name"], y=df_b["median_price"],
+            mode="lines+markers", name=borough,
+            line=dict(color=THEME["borough_colors"][borough], width=width),
+            marker=dict(size=marker_size),
+            opacity=opacity,
+            yaxis="y2",
+            hovertemplate=(f"<b>{borough}</b><br>%{{x}}<br>"
+                           f"Median: $%{{y:,.0f}}<extra></extra>")
+        ))
+
+    fig.update_layout(
+        title=dict(
+            text=f"Monthly Transaction Volume + Median Price ({year_min}-{year_max})",
+            x=0.5, font=dict(family="Arial", size=16, color="#2c2c2c")
+        ),
+        paper_bgcolor="white", plot_bgcolor="#f8f9fa",
+        font=dict(family="Arial", size=12, color="#2c2c2c"),
+        margin=dict(t=60, b=80, l=80, r=80),
+        xaxis=dict(
+            title="Month",
+            categoryorder="array",
+            categoryarray=list(MONTH_LABELS.values()),
+            tickfont=dict(family="Arial", size=11),
+            gridcolor="rgba(0,0,0,0.06)"
+        ),
+        yaxis=dict(
+            title="Number of Transactions",
+            tickformat=",",
+            tickfont=dict(family="Arial", size=11),
+            gridcolor="rgba(0,0,0,0.06)"
+        ),
+        yaxis2=dict(
+            title="Median Sale Price (by borough)",
+            tickprefix="$", tickformat=",.0f",
+            tickfont=dict(family="Arial", size=11),
+            overlaying="y", side="right", showgrid=False
+        ),
+        legend=dict(
+            orientation="h", yanchor="bottom", y=-0.2,
+            xanchor="center", x=0.5,
+            font=dict(family="Arial", size=11),
+            bgcolor="rgba(0,0,0,0)"
+        ),
+        hovermode="closest"
+    )
+
+    return fig
+
+
+# ============================================================
+# CALLBACK 1: Sync borough controls
 # ============================================================
 
 @app.callback(
@@ -341,16 +611,13 @@ def grey_out_other_boroughs(fig, selected_borough_label):
     prevent_initial_call=True
 )
 def sync_borough_controls(dropdown_val, radio_val):
-    """Whichever the user just changed becomes the source of truth.
-    The other UI control updates to match."""
     trigger = ctx.triggered_id
 
     if trigger == "borough-dropdown":
         new_state = dropdown_val if dropdown_val else "all"
         return new_state, dropdown_val, new_state
-
     elif trigger == "borough-radio":
-        new_state    = radio_val
+        new_state = radio_val
         new_dropdown = None if radio_val == "all" else radio_val
         return new_state, new_dropdown, radio_val
 
@@ -358,34 +625,74 @@ def sync_borough_controls(dropdown_val, radio_val):
 
 
 # ============================================================
-# CALLBACK 2: Update all charts based on year + borough state
+# CALLBACK: Monthly section follows top filters
 # ============================================================
 
 @app.callback(
-    Output("kpi-cards",  "children"),
-    Output("fig-map",    "figure"),
-    Output("fig-line",   "figure"),
-    Output("fig-income", "figure"),
-    Output("fig-school", "figure"),
-    Output("fig-crime",  "figure"),
-    Output("fig-subway", "figure"),
-    Input("year-slider",    "value"),
-    Input("borough-state",  "data"),
+    Output("monthly-borough-radio", "value"),
+    Output("monthly-year-slider",   "value"),
+    Output("monthly-override",      "data"),
+    Input("borough-state",          "data"),
+    Input("year-slider",            "value"),
+    Input("monthly-borough-radio",  "value"),
+    Input("monthly-year-slider",    "value"),
+    State("monthly-override",       "data"),
+    prevent_initial_call=False
 )
+def sync_monthly_filters(top_borough, top_year,
+                          monthly_borough, monthly_year,
+                          override):
+    trigger = ctx.triggered_id
 
-@cache.memoize()    
-def update_charts(year_range, borough_state):
+    if override is None:
+        override = {"borough": False, "year": False}
 
+    if trigger == "monthly-borough-radio":
+        override["borough"] = True
+        return no_update, no_update, override
+
+    if trigger == "monthly-year-slider":
+        override["year"] = True
+        return no_update, no_update, override
+
+    if trigger == "borough-state":
+        override["borough"] = False
+        new_b = top_borough if top_borough else "all"
+        return new_b, no_update, override
+
+    if trigger == "year-slider":
+        override["year"] = False
+        return no_update, top_year, override
+
+    new_b = top_borough if top_borough else "all"
+    return new_b, top_year, override
+
+
+# ============================================================
+# CALLBACK 2: Update top section charts
+# ============================================================
+
+@app.callback(
+    Output("kpi-cards",   "children"),
+    Output("fig-map",     "figure"),
+    Output("fig-line",    "figure"),
+    Output("fig-income",  "figure"),
+    Output("fig-school",  "figure"),
+    Output("fig-crime",   "figure"),
+    Output("fig-subway",  "figure"),
+    Input("year-slider",         "value"),
+    Input("borough-state",       "data"),
+    Input("crime-type-dropdown", "value"),
+)
+@cache.memoize()
+def update_top_charts(year_range, borough_state, crime_type):
     year_min, year_max = year_range
 
-    # selected_borough = None  → all boroughs (Map/Line show full NYC)
-    # selected_borough = "manhattan" → filter to that borough
     selected_borough = (None if (borough_state is None or borough_state == "all")
                         else borough_state)
     selected_borough_label = (BOROUGH_NAME_MAP.get(selected_borough)
                               if selected_borough else None)
 
-    # Filter df_master by year + borough (used for KPI/Map/Line)
     dff = df_master[
         (df_master["year"] >= year_min) &
         (df_master["year"] <= year_max)
@@ -393,7 +700,7 @@ def update_charts(year_range, borough_state):
     if selected_borough:
         dff = dff[dff["borough"] == selected_borough]
 
-    # ── KPI ──
+    # KPI
     total_sales  = len(dff)
     median_price = dff["sale_price"].median()
     p_first      = dff[dff["year"] == year_min]["sale_price"].median()
@@ -408,18 +715,17 @@ def update_charts(year_range, borough_state):
         top_boro_name = "N/A"
 
     kpi_cards = [
-        kpi_card("Total Transactions",
-                 f"{total_sales:,}", "#2c2c2c"),
+        kpi_card("Total Transactions", f"{total_sales:,}", "#2c2c2c"),
         kpi_card("NYC Median Sale Price",
                  f"${median_price:,.0f}" if pd.notna(median_price) else "N/A",
                  "#636EFA"),
-        kpi_card(f"Price Change {year_min}→{year_max}",
+        kpi_card(f"Price Change {year_min}->{year_max}",
                  f"{sign}{pct:.1f}%",
                  "#00CC96" if pct >= 0 else "#EF553B"),
         kpi_card("Most Expensive Borough", top_boro_name, "#EF553B"),
     ]
 
-    # ── Viz 1: Map ──
+    # Map
     zip_col  = "zip_code"
     zip_data = (
         dff.dropna(subset=[zip_col, "sale_price"])
@@ -435,8 +741,7 @@ def update_charts(year_range, borough_state):
     arr_zip     = arrest_per_zip.rename(columns={"arrest_count": "crime_count_2025"})
 
     zip_data = (zip_data
-                .merge(df_sch_score[["zip_code", "school_score"]],
-                       on="zip_code", how="left")
+                .merge(df_sch_score[["zip_code", "school_score"]], on="zip_code", how="left")
                 .merge(df_sub_dist, on="zip_code", how="left")
                 .merge(arr_zip,     on="zip_code", how="left"))
     zip_data["school_score"]              = zip_data["school_score"].round(1)
@@ -478,7 +783,7 @@ def update_charts(year_range, borough_state):
             "nearest_subway"           : "Nearest Station",
             "crime_count_2025"         : "Arrests (2025)"
         },
-        title=f"NYC Median Property Sale Price by ZIP Code ({year_min}–{year_max})"
+        title=f"NYC Median Property Sale Price by ZIP Code ({year_min}-{year_max})"
     )
     fig_map.update_traces(marker_line_width=0.3, marker_line_color="white")
     fig_map.update_layout(
@@ -494,15 +799,18 @@ def update_charts(year_range, borough_state):
         )
     )
 
-    # ── Viz 2: Line Chart ──
+    # Line Chart
     line_data = (dff[dff["sale_price"] >= 10_000]
                  .groupby(["year", "borough"], as_index=False)
                  .agg(median_sale_price=("sale_price", "median")))
     line_data["borough_display"] = line_data["borough"].map(BOROUGH_NAME_MAP)
 
     annotation_offset = {
-        "Manhattan": 80000, "Brooklyn": 50000, "Queens": 0,
-        "Staten Island": -50000, "Bronx": -80000
+        "Manhattan": 100000,
+        "Brooklyn": 50000,
+        "Queens": -20000,
+        "Staten Island": 20000,
+        "Bronx": -100000
     }
     boroughs_to_show = (
         [BOROUGH_NAME_MAP[selected_borough]] if selected_borough
@@ -547,7 +855,7 @@ def update_charts(year_range, borough_state):
                              font=dict(family="Arial",
                                        color="rgba(180,140,0,0.7)", size=11))
     fig_line.update_layout(
-        title=dict(text=f"Property Sale Price Trends by Borough ({year_min}–{year_max})",
+        title=dict(text=f"Property Sale Price Trends by Borough ({year_min}-{year_max})",
                    x=0.5, font=dict(family="Arial", size=16, color="#2c2c2c")),
         paper_bgcolor="white", plot_bgcolor="#f8f9fa",
         font=dict(family="Arial", size=12, color="#2c2c2c"),
@@ -567,11 +875,7 @@ def update_charts(year_range, borough_state):
         hovermode="x unified"
     )
 
-    # ════════════════════════════════════════════════════
-    # SCATTER PLOTS — use FULL year-filtered data (all boroughs visible).
-    # When a borough is selected, others are dimmed via grey_out_other_boroughs.
-    # ════════════════════════════════════════════════════
-
+    # Scatters base data
     dff_all = df_master[
         (df_master["year"] >= year_min) &
         (df_master["year"] <= year_max)
@@ -587,12 +891,10 @@ def update_charts(year_range, borough_state):
     base_data = base_data[base_data["total_sales"] >= 10].copy()
     base_data["borough_display"] = base_data["borough"].map(BOROUGH_NAME_MAP)
 
-    # ── Scatter 1: INCOME (your Cell 58) ──
+    # Income
     inc_data = base_data.merge(
-        df_income[["zip_code", "median_income_usd"]],
-        on="zip_code", how="inner"
+        df_income[["zip_code", "median_income_usd"]], on="zip_code", how="inner"
     )
-
     fig_income = px.scatter(
         inc_data,
         x="median_income_usd", y="median_sale_price",
@@ -602,26 +904,22 @@ def update_charts(year_range, borough_state):
         color_discrete_map=THEME["borough_colors"],
         hover_name="borough_display",
         hover_data={
-            "zip_code"         : True,
-            "median_income_usd": ":$,.0f",
-            "median_sale_price": ":$,.0f",
-            "total_sales"      : ":,",
-            "borough_display"  : False,
-            "borough"          : False
+            "zip_code": True, "median_income_usd": ":$,.0f",
+            "median_sale_price": ":$,.0f", "total_sales": ":,",
+            "borough_display": False, "borough": False
         },
         labels={
             "median_income_usd" : "Median Household Income",
             "median_sale_price" : "Median Property Sale Price",
             "total_sales"       : "Total Sales",
-            "borough_display"   : "Borough",
-            "zip_code"          : "ZIP Code"
+            "borough_display"   : "Borough", "zip_code": "ZIP Code"
         },
         title="Median Household Income vs Property Sale Price by ZIP Code"
     )
     fig_income = apply_scatter_theme(fig_income, "Median Household Income")
     fig_income = grey_out_other_boroughs(fig_income, selected_borough_label)
 
-    # ── Scatter 2: SCHOOL (your Cell 61) ──
+    # School
     sch_data = base_data.merge(
         df_sch_score[["zip_code", "school_score", "best_school_name",
                       "best_school_type", "best_school_level"]],
@@ -638,15 +936,10 @@ def update_charts(year_range, borough_state):
         color_discrete_map=THEME["borough_colors"],
         hover_name="borough_display",
         hover_data={
-            "zip_code"         : True,
-            "school_score"     : ":.1f",
-            "best_school_name" : True,
-            "best_school_type" : True,
-            "best_school_level": True,
-            "median_sale_price": ":$,.0f",
-            "total_sales"      : ":,",
-            "borough_display"  : False,
-            "borough"          : False
+            "zip_code": True, "school_score": ":.1f",
+            "best_school_name": True, "best_school_type": True,
+            "best_school_level": True, "median_sale_price": ":$,.0f",
+            "total_sales": ":,", "borough_display": False, "borough": False
         },
         labels={
             "school_score"     : "School Quality Score (higher = better)",
@@ -655,74 +948,61 @@ def update_charts(year_range, borough_state):
             "best_school_level": "School Level",
             "median_sale_price": "Median Property Sale Price",
             "total_sales"      : "Total Sales",
-            "borough_display"  : "Borough",
-            "zip_code"         : "ZIP Code"
+            "borough_display"  : "Borough", "zip_code": "ZIP Code"
         },
         title="School Quality vs Property Sale Price by ZIP Code"
     )
     fig_school = apply_scatter_theme(fig_school, "School Quality Score (higher = better)")
     fig_school = grey_out_other_boroughs(fig_school, selected_borough_label)
 
-    # ── Scatter 3: CRIME (your Cell 63 — enhanced with crime details) ──
+    # Crime - DYNAMIC based on dropdown
+    crime_label = CRIME_TYPES.get(crime_type, "Total Arrests")
     crim_data = base_data.merge(
         arrest_zip_enhanced_clean[[
             "zip_code", "arrest_count", "crime_per_10k",
             "murder", "rape", "robbery", "fel_assault",
             "burglary", "gr_larceny", "gla"
-        ]],
-        on="zip_code", how="inner"
+        ]], on="zip_code", how="inner"
     )
+
+    # Compute correlation for the selected crime type
+    if crime_type in crim_data.columns:
+        valid = crim_data.dropna(subset=[crime_type, "median_sale_price"])
+        corr_value = valid[crime_type].corr(valid["median_sale_price"]) if len(valid) > 1 else 0
+    else:
+        corr_value = 0
 
     fig_crime = px.scatter(
         crim_data,
-        x="arrest_count", y="median_sale_price",
+        x=crime_type, y="median_sale_price",
         color="borough_display", size="total_sales", size_max=40,
         trendline="ols", trendline_scope="overall",
         trendline_color_override="gray",
         color_discrete_map=THEME["borough_colors"],
         hover_name="borough_display",
         hover_data={
-            "zip_code"        : True,
-            "median_sale_price": ":$,.0f",
-            "total_sales"     : ":,",
-            "arrest_count"    : ":,",
-            "crime_per_10k"   : ":.1f",
-            "murder"          : ":.0f",
-            "rape"            : ":.0f",
-            "robbery"         : ":.0f",
-            "fel_assault"     : ":.0f",
-            "burglary"        : ":.0f",
-            "gr_larceny"      : ":.0f",
-            "gla"             : ":.0f",
-            "borough_display" : False,
-            "borough"         : False
+            "zip_code": True, "median_sale_price": ":$,.0f",
+            "total_sales": ":,",
+            crime_type: ":.1f" if crime_type == "crime_per_10k" else ":,",
+            "borough_display": False, "borough": False
         },
         labels={
-            "zip_code"        : "ZIP Code",
+            "zip_code": "ZIP Code",
             "median_sale_price": "Median Property Sale Price",
-            "total_sales"     : "Total Sales",
-            "arrest_count"    : "Arrests per ZIP (2025)",
-            "crime_per_10k"   : "Serious Crimes per 10,000 People",
-            "murder"          : "Murder (Homicide)",
-            "rape"            : "Rape (Sexual Assault)",
-            "robbery"         : "Robbery (Armed/Force)",
-            "fel_assault"     : "Felony Assault (Violence)",
-            "burglary"        : "Burglary (Break-in)",
-            "gr_larceny"      : "Grand Larceny (Theft >$1,000)",
-            "gla"             : "Grand Larceny Auto (Car Theft)",
-            "borough_display" : "Borough"
+            "total_sales": "Total Sales",
+            crime_type: crime_label,
+            "borough_display": "Borough"
         },
-        title="Crime Rate vs Property Sale Price by ZIP Code (2025)"
+        title=f"{crime_label} vs Property Sale Price (r = {corr_value:+.2f})"
     )
-    fig_crime = apply_scatter_theme(fig_crime, "Total Arrests per ZIP Code (2025)")
+    fig_crime = apply_scatter_theme(fig_crime, crime_label)
     fig_crime = grey_out_other_boroughs(fig_crime, selected_borough_label)
 
-    # ── Scatter 4: SUBWAY (your Cell 69) ──
+    # Subway
     sub_data = base_data.merge(
         df_zip_centroids[["zip_code", "nearest_subway_dist_miles", "nearest_subway"]],
         on="zip_code", how="inner"
     )
-
     fig_subway = px.scatter(
         sub_data,
         x="nearest_subway_dist_miles", y="median_sale_price",
@@ -732,13 +1012,9 @@ def update_charts(year_range, borough_state):
         color_discrete_map=THEME["borough_colors"],
         hover_name="borough_display",
         hover_data={
-            "zip_code"                 : True,
-            "nearest_subway_dist_miles": ":.2f",
-            "nearest_subway"           : True,
-            "median_sale_price"        : ":$,.0f",
-            "total_sales"              : ":,",
-            "borough_display"          : False,
-            "borough"                  : False
+            "zip_code": True, "nearest_subway_dist_miles": ":.2f",
+            "nearest_subway": True, "median_sale_price": ":$,.0f",
+            "total_sales": ":,", "borough_display": False, "borough": False
         },
         labels={
             "nearest_subway_dist_miles": "Distance to Nearest Subway (miles)",
@@ -758,13 +1034,56 @@ def update_charts(year_range, borough_state):
 
 
 # ============================================================
-# RUN
+# CALLBACK 3: Update Monthly Section
 # ============================================================
 
-#if __name__ == "__main__":
- #   app.run(debug=False, port=8051)
+@app.callback(
+    Output("kpi-monthly", "children"),
+    Output("fig-seasonal","figure"),
+    Input("monthly-borough-radio", "value"),
+    Input("monthly-year-slider",   "value"),
+)
+@cache.memoize()
+def update_monthly_section(monthly_borough, monthly_year):
+    year_min, year_max = monthly_year
+
+    selected_borough = (None if (monthly_borough is None or monthly_borough == "all")
+                        else monthly_borough)
+    selected_borough_label = (BOROUGH_NAME_MAP.get(selected_borough)
+                              if selected_borough else None)
+
+    dff_year = df_master[
+        (df_master["year"] >= year_min) &
+        (df_master["year"] <= year_max)
+    ].copy()
+
+    dff_kpi = dff_year.copy()
+    if selected_borough:
+        dff_kpi = dff_kpi[dff_kpi["borough"] == selected_borough]
+
+    kpi_monthly  = build_monthly_kpi_cards(dff_kpi)
+    fig_seasonal = build_seasonal_chart(
+        dff_year, year_min, year_max, selected_borough_label
+    )
+
+    return kpi_monthly, fig_seasonal
+
+
+# ============================================================
+# RUN
+# ============================================================
 
 import os
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8051))
     app.run(debug=False, host="0.0.0.0", port=port)
+
+
+# ============================================================
+# RUN
+# ============================================================
+
+
+
+
+#note for student: run  python app.py  at terminal at below to open 8051

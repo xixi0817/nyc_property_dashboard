@@ -195,8 +195,35 @@ app.layout = html.Div([
     ], style={"padding": "20px 30px 10px 30px",
               "borderBottom": "1px solid #e8e8e8"}),
 
-    # Line Chart
+# Line Chart with Property Type Pills
     html.Div([
+        # Property Type Pills (independent filter for this chart only)
+        html.Div([
+            html.Span("Explore by Property Type:  ",
+                style={"fontFamily": "Arial", "fontSize": "13px",
+                       "color": "#2c2c2c", "fontWeight": "bold",
+                       "marginRight": "8px"}),
+            dcc.RadioItems(
+                id="property-type-pills",
+                options=[
+                    {"label": "All",       "value": "all"},
+                    {"label": "Condo",     "value": "Condo"},
+                    {"label": "1-Family",  "value": "1-Family"},
+                    {"label": "2-Family",  "value": "2-Family"},
+                    {"label": "3-Family",  "value": "3-Family"},
+                    {"label": "Rental",    "value": "Rental"},
+                    {"label": "Co-op",     "value": "Co-op"},
+                ],
+                value="all",
+                inline=True,
+                className="property-type-pills",
+                inputClassName="property-type-pill-input",
+                labelClassName="property-type-pill-label",
+            )
+        ], style={"padding": "8px 0 12px 0",
+                  "display": "flex", "alignItems": "center",
+                  "flexWrap": "wrap", "gap": "4px"}),
+
         dcc.Graph(id="fig-line", style={"height": "420px"})
     ], style={"padding": "10px 30px",
               "borderBottom": "1px solid #e8e8e8"}),
@@ -683,9 +710,10 @@ def sync_monthly_filters(top_borough, top_year,
     Input("year-slider",         "value"),
     Input("borough-state",       "data"),
     Input("crime-type-dropdown", "value"),
+    Input("property-type-pills", "value"),
 )
 @cache.memoize()
-def update_top_charts(year_range, borough_state, crime_type):
+def update_top_charts(year_range, borough_state, crime_type, property_type):
     year_min, year_max = year_range
 
     selected_borough = (None if (borough_state is None or borough_state == "all")
@@ -799,23 +827,42 @@ def update_top_charts(year_range, borough_state, crime_type):
         )
     )
 
-    # Line Chart
-    line_data = (dff[dff["sale_price"] >= 10_000]
+   
+    # Line Chart - independent property type filter
+    line_dff = dff if property_type == "all" else dff[dff["property_type"] == property_type]
+    line_data = (line_dff[line_dff["sale_price"] >= 10_000]
                  .groupby(["year", "borough"], as_index=False)
                  .agg(median_sale_price=("sale_price", "median")))
     line_data["borough_display"] = line_data["borough"].map(BOROUGH_NAME_MAP)
 
-    annotation_offset = {
-        "Manhattan": 100000,
-        "Brooklyn": 50000,
-        "Queens": -20000,
-        "Staten Island": 20000,
-        "Bronx": -100000
-    }
+
     boroughs_to_show = (
         [BOROUGH_NAME_MAP[selected_borough]] if selected_borough
         else ["Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island"]
     )
+
+    # Smart annotation offset: spread labels based on actual price range
+    # Get the final-year prices for each borough to compute non-overlapping offsets
+    final_year_prices = {}
+    for b in boroughs_to_show:
+        df_b_temp = line_data[line_data["borough_display"] == b].sort_values("year")
+        if len(df_b_temp) >= 2:
+            final_year_prices[b] = df_b_temp["median_sale_price"].iloc[-1]
+
+    # Sort boroughs by final price (ascending) and assign vertical offsets dynamically
+    sorted_boroughs = sorted(final_year_prices.items(), key=lambda x: x[1])
+    annotation_offset = {}
+    if sorted_boroughs:
+        price_range = max(final_year_prices.values()) - min(final_year_prices.values())
+        # Minimum gap between labels = 5% of total y-range
+        min_gap = max(price_range * 0.12, 200000)
+        prev_label_y = -float("inf")
+        for borough, price in sorted_boroughs:
+            # Push label up if it would overlap with the previous one
+            target_y = max(price, prev_label_y + min_gap)
+            annotation_offset[borough] = target_y - price
+            prev_label_y = target_y
+
 
     fig_line = go.Figure()
     for borough in boroughs_to_show:
@@ -855,7 +902,7 @@ def update_top_charts(year_range, borough_state, crime_type):
                              font=dict(family="Arial",
                                        color="rgba(180,140,0,0.7)", size=11))
     fig_line.update_layout(
-        title=dict(text=f"Property Sale Price Trends by Borough ({year_min}-{year_max})",
+        title=dict(text=f"Property Sale Price Trends by Borough ({year_min}-{year_max}){'' if property_type == 'all' else ' — ' + property_type}",
                    x=0.5, font=dict(family="Arial", size=16, color="#2c2c2c")),
         paper_bgcolor="white", plot_bgcolor="#f8f9fa",
         font=dict(family="Arial", size=12, color="#2c2c2c"),

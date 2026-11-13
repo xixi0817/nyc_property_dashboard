@@ -22,6 +22,7 @@ Datasets/property_data/
 
 # Notebooks (raw work, not for deployment)
 *.ipynb
+!notebooks/data_prep.ipynb
 
 # Other
 viz1_geospatial_map.html

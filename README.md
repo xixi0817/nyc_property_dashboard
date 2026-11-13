@@ -38,6 +38,10 @@ The data comes from online open data sources. The school rankings were compiled 
 
 Raw source files are not included in this repo because of their size. The files in `Datasets/` are cleaned and reduced versions used by the app.
 
+## Data preparation
+
+`notebooks/data_prep.ipynb` shows how the data was prepared: loading the yearly sales files (about 1.1 million rows), filtering to residential sales and removing outliers and duplicates (about 498,000 rows), joining ZIP-level income, school, crime, and subway data, the KD-Tree calculations, and reducing `df_master.csv.gz` to the columns the app uses (about 2 MB). Chart outputs were removed to keep the file small. The raw files it reads are not in this repo, so it will not run as is.
+
 ## Limitations
 
 - School rankings were compiled by the team from public school rankings. They do not come from one official source, so the ranking method may differ between schools.
